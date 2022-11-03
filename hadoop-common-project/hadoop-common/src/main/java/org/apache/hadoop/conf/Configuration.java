@@ -1547,6 +1547,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
       result = substituteVars(getProps().getProperty(n, defaultValue));
     }
     LOG.warn("[CTEST][GET-PARAM] " + ctestParam); //CTEST
+    // System.out.print("CTEST --------------------------- " + ctestParam);
     return result;
   }
 
