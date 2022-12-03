@@ -41,8 +41,6 @@ import org.apache.hadoop.net.NetUtils;
 import org.apache.hadoop.util.BasicDiskValidator;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Public
 @Evolving
@@ -101,19 +99,13 @@ public class YarnConfiguration extends Configuration {
   @Deprecated
   public static final int APPLICATION_MAX_TAG_LENGTH = 100;
 
-  private static final Logger LOG =
-      LoggerFactory.getLogger(YarnConfiguration.class);
-
   static {
-    LOG.warn("2nd addDefaultResource start Loading");
     addDeprecatedKeys();
     Configuration.addDefaultResource(YARN_DEFAULT_CONFIGURATION_FILE);
     Configuration.addDefaultResource(YARN_SITE_CONFIGURATION_FILE);
     Configuration.addDefaultResource(RESOURCE_TYPES_CONFIGURATION_FILE);
     Configuration.addDefaultResource("core-ctest.xml");
-    LOG.warn("2nd addDefaultResource complete Loading");
     Configuration conf = new Configuration();
-    LOG.warn("hadoop.security.groups.negative-cache.secs = " + conf.get("hadoop.security.groups.negative-cache.secs"));
   }
 
   private static void addDeprecatedKeys() {
