@@ -104,6 +104,7 @@ public class YarnConfiguration extends Configuration {
     Configuration.addDefaultResource(YARN_DEFAULT_CONFIGURATION_FILE);
     Configuration.addDefaultResource(YARN_SITE_CONFIGURATION_FILE);
     Configuration.addDefaultResource(RESOURCE_TYPES_CONFIGURATION_FILE);
+    Configuration.addDefaultResource("core-ctest.xml");
   }
 
   private static void addDeprecatedKeys() {
