@@ -786,6 +786,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
     // Add default resources
     addDefaultResource("core-default.xml");
     addDefaultResource("core-site.xml");
+    // addDefaultResource("core-ctest.xml");
 
     // print deprecation warning if hadoop-site.xml is found in classpath
     ClassLoader cL = Thread.currentThread().getContextClassLoader();
@@ -800,6 +801,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
           "respectively");
       addDefaultResource("hadoop-site.xml");
     }
+    // LOG.warn("1 Loaded");
   }
 
   private Properties properties;
@@ -1225,6 +1227,21 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
   }
 
   /**
+   * Get the appliance stack trace information of the current thread
+   * 
+   * @return the appliance stack trace information of the current thread.
+   */
+  private String getStackTrace() {
+    // String stacktrace = " ";
+    // for (StackTraceElement element : Thread.currentThread().getStackTrace()) {
+    //   // stacktrace = stacktrace.concat(element.getClassName() + "\t");
+    //   stacktrace = stacktrace.concat(element.getClassName() + '#' + element.getMethodName() + ' ');
+    // }
+    // return stacktrace;
+    return "";
+  }
+
+  /**
    * Get the value of the <code>name</code> property, <code>null</code> if
    * no such property exists. If the key is deprecated, it returns the value of
    * the first key which replaces the deprecated key and is not null.
@@ -1240,11 +1257,15 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    *         or null if no such property exists.
    */
   public String get(String name) {
+    String ctestParam = name; // CTEST
     String[] names = handleDeprecation(deprecationContext.get(), name);
     String result = null;
     for(String n : names) {
+      ctestParam = n; // CTEST
       result = substituteVars(getProps().getProperty(n));
     }
+    // LOG.warn("[CTEST][GET-PARAM] " + ctestParam + getStackTrace()); //CTEST
+    LOG.warn("[CTEST][GET-PARAM-KEY-VALUE] " + ctestParam + ":" + result); //CTEST
     return result;
   }
 
@@ -1332,11 +1353,14 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    *         its replacing property and null if no such property exists.
    */
   public String getRaw(String name) {
+    String ctestParam = name; //CTEST
     String[] names = handleDeprecation(deprecationContext.get(), name);
     String result = null;
     for(String n : names) {
+      ctestParam = n; //CTEST
       result = getProps().getProperty(n);
     }
+    LOG.warn("[CTEST][GET-PARAM] " + ctestParam + getStackTrace()); //CTEST
     return result;
   }
 
@@ -1383,6 +1407,20 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
   public void set(String name, String value) {
     set(name, value, null);
   }
+
+  /** 
+   * Set the <code>value</code> of the <code>name</code> property. If 
+   * <code>name</code> is deprecated or there is a deprecated name associated to it,
+   * it sets the value to both names. Name will be trimmed before put into
+   * configuration.
+   * 
+   * @param name property name.
+   * @param value property value.
+   * @param value property source.
+   */
+  public void set(String name, String value, String source) {
+    set(name, value, source, true);
+  }
   
   /** 
    * Set the <code>value</code> of the <code>name</code> property. If 
@@ -1393,10 +1431,12 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    * @param name property name.
    * @param value property value.
    * @param source the place that this configuration value came from 
+   * @param log_enabled whether logging is enabled
    * (For debugging).
    * @throws IllegalArgumentException when the value or name is null.
    */
-  public void set(String name, String value, String source) {
+  // public void set(String name, String value, String source) {
+  public void set(String name, String value, String source, boolean log_enabled) {
     Preconditions.checkArgument(
         name != null,
         "Property name must not be null");
@@ -1408,6 +1448,8 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
     if (deprecations.getDeprecatedKeyMap().isEmpty()) {
       getProps();
     }
+    // if(log_enabled) LOG.warn("[CTEST][SET-PARAM] " + name); //CTEST
+    if(log_enabled) LOG.warn("[CTEST][SET-PARAM] " + name + getStackTrace()); //CTEST
     getOverlay().setProperty(name, value);
     getProps().setProperty(name, value);
     String newSource = (source == null ? "programmatically" : source);
@@ -1416,11 +1458,13 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
       putIntoUpdatingResource(name, new String[] {newSource});
       String[] altNames = getAlternativeNames(name);
       if(altNames != null) {
-        for(String n: altNames) {
-          if(!n.equals(name)) {
-            getOverlay().setProperty(n, value);
-            getProps().setProperty(n, value);
-            putIntoUpdatingResource(n, new String[] {newSource});
+        for(String paramName: altNames) {
+          if(!paramName.equals(name)) {
+            // if(log_enabled) LOG.warn("[CTEST][SET-PARAM] " + paramName); //CTEST
+            if(log_enabled) LOG.warn("[CTEST][SET-PARAM] " + paramName + getStackTrace()); //CTEST
+            getOverlay().setProperty(paramName, value);
+            getProps().setProperty(paramName, value);
+            putIntoUpdatingResource(paramName, new String[] {newSource});
           }
         }
       }
@@ -1428,10 +1472,12 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
     else {
       String[] names = handleDeprecation(deprecationContext.get(), name);
       String altSource = "because " + name + " is deprecated";
-      for(String n : names) {
-        getOverlay().setProperty(n, value);
-        getProps().setProperty(n, value);
-        putIntoUpdatingResource(n, new String[] {altSource});
+      for(String paramName : names) {
+        // if(log_enabled) LOG.warn("[CTEST][SET-PARAM] " + paramName); //CTEST
+        if(log_enabled) LOG.warn("[CTEST][SET-PARAM] " + paramName + getStackTrace()); //CTEST
+        getOverlay().setProperty(paramName, value);
+        getProps().setProperty(paramName, value);
+        putIntoUpdatingResource(paramName, new String[] {altSource});
       }
     }
   }
@@ -1501,11 +1547,15 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    *         doesn't exist.                    
    */
   public String get(String name, String defaultValue) {
+    String ctestParam = name; //CTEST
     String[] names = handleDeprecation(deprecationContext.get(), name);
     String result = null;
     for(String n : names) {
+      ctestParam = n; //CTEST
       result = substituteVars(getProps().getProperty(n, defaultValue));
     }
+    LOG.warn("[CTEST][GET-PARAM] " + ctestParam + getStackTrace()); //CTEST
+    // System.out.print("CTEST --------------------------- " + ctestParam);
     return result;
   }
 
@@ -3034,6 +3084,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
     if(loadDefaults && fullReload) {
       for (String resource : defaultResources) {
         loadResource(properties, new Resource(resource, false), quiet);
+        LOG.warn("Current dir:" + System.getProperty("user.dir"));
       }
     }
     
